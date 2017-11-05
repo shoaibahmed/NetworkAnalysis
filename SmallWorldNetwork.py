@@ -1,4 +1,7 @@
 import graphviz as gv
+import numpy as np
+import numba
+
 import random
 import queue as Queue
 import sys
@@ -39,6 +42,7 @@ for i in range(N):
 
 			print ("Edge added between %d and %d" % (i, nodeIdx))
 
+@numba.jit
 def getAdjacentNodes(nodeNum):
 	# Iterate over all the nodes adjacent to the current node
 	adjacentNodes = []
@@ -51,6 +55,7 @@ def getAdjacentNodes(nodeNum):
 	return adjacentNodes
 
 # Determines the connectedness of a local region
+@numba.jit
 def clusteringCoefficient(nodeNum):
 	adjacentNodes = getAdjacentNodes(nodeNum)
 	numAdjacentNodes = len(adjacentNodes)
@@ -66,9 +71,9 @@ def clusteringCoefficient(nodeNum):
 
 def insertOrUpdateItemInQueue(q, tupleVal):
 	for itemIdx, item in enumerate(q.queue):
-		if item[0] == tupleVal[0]:
-			# Replace the second value
-			q.queue[itemIdx][1] = tupleVal[1]
+		if item[1] == tupleVal[1]:
+			# Replace the distance value
+			q.queue[itemIdx][0] = tupleVal[0]
 			return
 
 	# If not found
@@ -113,7 +118,7 @@ def dijstraShortestPathAlgorithm(sourceNode, destinationNode):
 	return distances[destinationNode]
 
 # Determines the minimum number of edges to be traversed to reach the second node from the first node
-# TODO: Deal with broken connections (random probabilistic connections)
+@numba.jit
 def characteristicPathLength(firstNode, secondNode):
 	distance = dijstraShortestPathAlgorithm(firstNode, secondNode)
 	print ("Distance between %d and %d is %d" % (firstNode, secondNode, distance))
