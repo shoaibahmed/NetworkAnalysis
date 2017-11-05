@@ -1,8 +1,12 @@
 import graphviz as gv
+import random
+import queue as Queue
+import sys
 
 # Creat a uniform latice
 N = 20 # Number of nodes in the network
 K = 4 # Per vertex degree (number of links per node)
+p = 0.1 # Probability of a random connection
 
 graph = gv.Graph(format='svg', engine='circo')
 
@@ -18,12 +22,24 @@ for i in range(N):
 		nodeIdx = i + j
 		nodeIdx = N + nodeIdx if nodeIdx < 0 else nodeIdx if nodeIdx < N else nodeIdx - N
 		if i != nodeIdx:
-			print ("Edge added between %d and %d" % (i, nodeIdx))
-			graph.edge(str(i), str(nodeIdx))
-			edges.append((i, nodeIdx))
+			# Random connection
+			if random.random() < p:
+				# Generate random link
+				randomConnectionIndices = list(range(N))
+				del randomConnectionIndices[i]
+				
+				# Generate random index
+				nodeIdx = randomConnectionIndices[random.randint(0, N-2)]
 
-# Determines the connectedness of a local region
-def clusteringCoefficient(nodeNum):
+				graph.edge(str(i), str(nodeIdx))
+				edges.append((i, nodeIdx))
+			else:
+				graph.edge(str(i), str(nodeIdx))
+				edges.append((i, nodeIdx))
+
+			print ("Edge added between %d and %d" % (i, nodeIdx))
+
+def getAdjacentNodes(nodeNum):
 	# Iterate over all the nodes adjacent to the current node
 	adjacentNodes = []
 	for edge in edges:
@@ -32,6 +48,11 @@ def clusteringCoefficient(nodeNum):
 		elif (nodeNum == edge[1]):
 			adjacentNodes.append(edge[0])
 
+	return adjacentNodes
+
+# Determines the connectedness of a local region
+def clusteringCoefficient(nodeNum):
+	adjacentNodes = getAdjacentNodes(nodeNum)
 	numAdjacentNodes = len(adjacentNodes)
 	numConnectedAdjacentNodes = 0
 	for i in range(len(adjacentNodes) - 1):
@@ -43,19 +64,58 @@ def clusteringCoefficient(nodeNum):
 	print ("Node: %d | Adjacent Nodes: %s" % (nodeNum, str(adjacentNodes)))
 	return cc
 
-# Determines the minimum number of edges to be traversed to reach the second node from the first node
-def characteristicPathLength(firstNode, secondNode):
-	nodeDiff = abs(firstNode - secondNode)
-	if nodeDiff > int(N / 2):
-		nodeDiff = N - nodeDiff
-	distance = 0
-	if nodeDiff == 0:
-		distance = 0
-	elif nodeDiff < kLimit:
-		distance = 1
-	else:
-		distance = nodeDiff - kLimit + 1
+def insertOrUpdateItemInQueue(q, tupleVal):
+	for itemIdx, item in enumerate(q.queue):
+		if item[0] == tupleVal[0]:
+			# Replace the second value
+			q.queue[itemIdx][1] = tupleVal[1]
+			return
 
+	# If not found
+	q.put(tupleVal)
+
+# Shortest path algorithm for computing minimum distance the different nodes
+def dijstraShortestPathAlgorithm(sourceNode, destinationNode):
+	visitedSet = [sourceNode]
+	distances = {}
+	for i in range(N):
+		if i == sourceNode:
+			distances[i] = 0
+		else:
+			distances[i] = sys.float_info.max
+	q = Queue.PriorityQueue()
+	q.put((0, sourceNode)) # first element in the tuple is the node distance while the second number is the node number
+
+	while not q.empty():
+		# Get the item with the lest distance
+		currentNode = q.get(True)
+
+		# Add to the visited list
+		visitedSet.append(currentNode[1])
+		
+		# Get all adjacent nodes to the current node
+		adjacentNodes = getAdjacentNodes(currentNode[1])
+
+		# Iterate over all the neighbours to update their values
+		for adjacentNode in adjacentNodes:
+			# Update only if the node has not yet been visited
+			if adjacentNode not in visitedSet:
+				if currentNode[0] + 1 < distances[adjacentNode]:
+					distances[adjacentNode] = currentNode[0] + 1 # Used 1 as the graph is unweighted
+				
+				# Add to the priority queue
+				# q.put((distances[adjacentNode], adjacentNode))
+				insertOrUpdateItemInQueue(q, [distances[adjacentNode], adjacentNode])
+
+	print ("Dijskstra's Algorithm completed")
+	print (distances)
+
+	return distances[destinationNode]
+
+# Determines the minimum number of edges to be traversed to reach the second node from the first node
+# TODO: Deal with broken connections (random probabilistic connections)
+def characteristicPathLength(firstNode, secondNode):
+	distance = dijstraShortestPathAlgorithm(firstNode, secondNode)
 	print ("Distance between %d and %d is %d" % (firstNode, secondNode, distance))
 	return distance
 
@@ -76,7 +136,7 @@ C = C / N
 # L = L / (numEdges * (numEdges - 1))
 L = L / float(N * (N - 1))
 
-filename = graph.render(filename='test')
+filename = graph.render(filename='network')
 
 # Print graph stats
 print ("Number of nodes in graph: %d" % N)
