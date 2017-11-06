@@ -55,8 +55,9 @@ class Network():
 
 	def computeGraphStatistics(self):
 		# Compute graph stats
-		C = 0
-		L = 0
+		C = 0 # Clustering coefficient
+		L = 0 # Characterisitic path length
+
 		for i in range(self.N):
 			C += self.clusteringCoefficient(i)
 
@@ -66,19 +67,22 @@ class Network():
 				L += self.characteristicPathLength(firstNode, secondNode)
 				numEdges += 1
 
+		# Graph density
+		rho = 2 * len(self.edges) / (self.N * (self.N - 1))
+
 		# Normalize the values
 		C = C / self.N
-		# L = L / (numEdges * (numEdges - 1))
 		L = L / float(self.N * (self.N - 1))
 
 		if self.verbosity > -1:
 			# Print graph stats
 			print ("Number of nodes in graph: %d" % self.N)
 			print ("Degree per vertex: %d" % self.K)
+			print ("Computed graph density: %f" % rho)
 			print ("Computed clustering coefficient: %f" % C)
 			print ("Computed characteristic path length: %f" % L)
 
-		return L, C
+		return L, C, rho
 
 	@numba.jit
 	def getAdjacentNodes(self, nodeNum):

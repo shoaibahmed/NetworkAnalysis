@@ -6,7 +6,7 @@ import matplotlib as mpl
 
 N = 20
 K = 4
-pMax = 0.5
+pMax = 0.2
 pDelta = 0.02
 
 # Generate the graph
@@ -15,7 +15,7 @@ lVals = []
 cVals = []
 for p in list(np.arange(0, pMax, pDelta)):
 	net = Network.Network(N=N, K=K, p=p)
-	L, C = net.computeGraphStatistics()
+	L, C, rho = net.computeGraphStatistics()
 	pVals.append(p)
 	lVals.append(L)
 	cVals.append(C)
@@ -30,4 +30,3 @@ ax.plot(pVals, cVals, 'C1', label='C', linewidth=2.0)
 ax.legend()
 
 plt.savefig('./small_world_network.png', dpi=300)
-# plt.show()
