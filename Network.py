@@ -56,23 +56,27 @@ class Network():
 	def computeGraphStatistics(self):
 		# Compute graph stats
 		C = 0 # Clustering coefficient
-		L = 0 # Characterisitic path length
+		L = 0.0 # Characterisitic path length
 
 		for i in range(self.N):
 			C += self.clusteringCoefficient(i)
 
 		numEdges = 0
 		for firstNode in range(self.N):
-			for secondNode in range(firstNode, self.N):
-				L += self.characteristicPathLength(firstNode, secondNode)
+			currentL = 0.0
+			# for secondNode in range(firstNode, self.N):
+			for secondNode in range(self.N):
+				currentL += self.characteristicPathLength(firstNode, secondNode)
 				numEdges += 1
+
+			L = L + (currentL / float(self.N - 1))
 
 		# Graph density
 		rho = 2 * len(self.edges) / (self.N * (self.N - 1))
 
 		# Normalize the values
 		C = C / self.N
-		L = L / float(self.N * (self.N - 1))
+		L = L / self.N
 
 		if self.verbosity > -1:
 			# Print graph stats
@@ -124,6 +128,10 @@ class Network():
 
 	# Shortest path algorithm for computing minimum distance the different nodes
 	def dijstraShortestPathAlgorithm(self, sourceNode, destinationNode):
+		# Distance is 0 if the two points are the same
+		if sourceNode == destinationNode:
+			return 0
+
 		visitedSet = [sourceNode]
 		distances = {}
 		for i in range(self.N):
